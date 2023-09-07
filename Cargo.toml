@@ -1,14 +1,15 @@
 [workspace]
 members = [
-  "focus-interceptor-core"
-  "focus-interceptor-cli"
+  "focus-interceptor-core",
+  "focus-interceptor-cli",
 ]
+resolver = "2"
 
 [workspace.package]
 authors = ["Multirious"]
 homepage = "https://github.com/multirious-adhd-assistants/focus-interceptor"
 repository = "https://github.com/multirious-adhd-assistants/focus-interceptor"
-licnese = "MIT"
+license = "MIT"
 
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.56"
