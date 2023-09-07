@@ -1,8 +1,8 @@
-# hyperfocus-interceptor
+# focus-interceptor
 
 ***WIP***
 
-Most people probably just need a timer (such as the Pomodoro method) to stop their hyperfocus.
+Most people probably just need a timer (such as the Pomodoro method) to stop hyperfocusing.
 Well, I need a little bit more than that.
 
 Features:
@@ -10,9 +10,9 @@ Features:
 - Advanced scheduler  
   Not just a simple timer for signaling break time.
 - Input blocking  
-  Stop your system from responding to input.
+  Stop the system from responding to input.
 - Induced distraction  
-  Automatically create distraction.
+  Automatically created distraction.
 
 Break time scheduling methods (Methods available to be used in the scheduler):
 - [ ] Time
