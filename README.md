@@ -14,7 +14,7 @@ Features:
 - Induced distraction  
   Automatically create distraction.
 
-Break time scheduling methods:
-- [ ] Timer
+Break time scheduling methods (Methods available to be used in the scheduler):
+- [ ] Time
 - [ ] Input monitor
 - [ ] Window event
