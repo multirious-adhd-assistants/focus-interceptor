@@ -92,36 +92,38 @@ mod schedule {
     }
 }
 
-mod movement_monitor {
+mod action_monitor {
+    pub const AVERAGE_CLICKS_PER_MINUTE: usize = 300;
+
     use std::{
-        collections::VecDeque,
+        collections::{BTreeMap, VecDeque},
         time::{Duration, Instant},
     };
 
-    #[derive(Debug)]
-    struct OccurrenceLogger {
+    #[derive(Debug, Default)]
+    pub struct OccurrenceLogger {
         timestamps: VecDeque<Instant>,
-        pub max_data: usize,
     }
 
     impl OccurrenceLogger {
-        pub fn new() -> OccurrenceLogger {
+        fn new() -> OccurrenceLogger {
             OccurrenceLogger::default()
         }
 
-        pub fn new_with_max_data(max_data: usize) -> OccurrenceLogger {
-            OccurrenceLogger {
-                max_data,
-                ..Default::default()
-            }
+        /// Shortens the deque, keeping the first `len` elements and dropping
+        /// the rest.
+        ///
+        /// If `len` is greater than the deque's current length, this has no
+        /// effect.
+        fn truncate(&mut self, len: usize) {
+            self.timestamps.truncate(len)
         }
 
         fn log_now(&mut self) {
             self.timestamps.push_front(Instant::now());
-            self.timestamps.truncate(self.max_data);
         }
 
-        fn count_in_time_window(&self, time_window: Duration) -> usize {
+        pub fn count_in_time_window(&self, time_window: Duration) -> usize {
             let latest_time = self.timestamps[0];
             let earliest_time = latest_time - time_window;
             self.timestamps
@@ -130,17 +132,68 @@ mod movement_monitor {
                 .count()
         }
 
-        fn rate_in_time_window(&self, time_window: Duration) -> f64 {
+        pub fn rate_in_time_window(&self, time_window: Duration) -> f64 {
             self.count_in_time_window(time_window) as f64 / time_window.as_secs_f64()
         }
     }
 
-    impl Default for OccurrenceLogger {
-        fn default() -> Self {
-            OccurrenceLogger {
-                timestamps: VecDeque::default(),
-                max_data: usize::MAX,
+    pub struct ActionMonitor {
+        /// first u8 meant body part
+        /// second u8 meant movement kind
+        actions: BTreeMap<u8, BTreeMap<u8, OccurrenceLogger>>,
+    }
+
+    impl ActionMonitor {
+        pub fn log_action(&mut self, body_part: u8, movement_kind: u8) {
+            self.actions
+                .entry(body_part)
+                .or_insert_with(BTreeMap::new)
+                .entry(movement_kind)
+                .or_insert_with(OccurrenceLogger::new)
+                .log_now()
+        }
+
+        pub fn purge_data(&mut self, len: usize) {
+            for action_logger in self.action_logggers_flatten_mut() {
+                action_logger.logger.truncate(len);
             }
         }
+
+        pub fn actions(&self) -> &BTreeMap<u8, BTreeMap<u8, OccurrenceLogger>> {
+            &self.actions
+        }
+
+        pub fn action_loggers_flatten(&self) -> impl Iterator<Item = ActionLoggerRef<'_>> {
+            self.actions.iter().flat_map(|(body_part, m)| {
+                m.iter().map(|(movement_kind, logger)| ActionLoggerRef {
+                    body_part: *body_part,
+                    movement_kind: *movement_kind,
+                    logger,
+                })
+            })
+        }
+
+        fn action_logggers_flatten_mut(&mut self) -> impl Iterator<Item = ActionLoggerRefMut<'_>> {
+            self.actions.iter_mut().flat_map(|(body_part, m)| {
+                m.iter_mut()
+                    .map(|(movement_kind, logger)| ActionLoggerRefMut {
+                        body_part: *body_part,
+                        movement_kind: *movement_kind,
+                        logger,
+                    })
+            })
+        }
+    }
+
+    pub struct ActionLoggerRef<'a> {
+        pub body_part: u8,
+        pub movement_kind: u8,
+        pub logger: &'a OccurrenceLogger,
+    }
+
+    struct ActionLoggerRefMut<'a> {
+        pub body_part: u8,
+        pub movement_kind: u8,
+        pub logger: &'a mut OccurrenceLogger,
     }
 }
